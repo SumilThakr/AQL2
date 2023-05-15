@@ -170,9 +170,37 @@ geop.raster_calculator(base_raster_path_band_const_list=lu_raster,
 # 3         Effect of soil carbon
 ############################################################
 
+#SOC				
+#  <0.6%	    -0.4376
+#  >0.6-1.2%	-0.2734
+#  >1.2-2%	    -0.2334
+#  >2%	        -0.06834
 
-#def kSOC(SOC):
 
+soc_raster           = [(os.path.join(wdir,'inputs', 'test_data', 'T_OC.tiff'),1)]
+soc_raster_out       = os.path.join(wdir,'intermediate','soc_effect.tif')
+def kSOC(SOC):
+    k = 0.0
+    match [pH > 0.6, pH > 1.2, SOC > 2.0]
+        case [False, False, False]:
+            k = -0.4376
+        case [True, False, False]:
+            k = -0.2734
+        case [True, True, False]:
+            k = -0.2334
+        case [True, True, True]:
+            k = -0.06834
+    result      = math.exp(k)
+    return(result)
+
+kSOC_v = np.vectorize(kSOC)
+
+geop.raster_calculator(base_raster_path_band_const_list=soc_raster,
+                                   local_op=kSOC_v, 
+                                   target_raster_path=soc_raster_out,
+                                   datatype_target=gdal.GDT_Float32,
+                                   nodata_target=-1,
+                                   calc_raster_stats=False)
 
 ############################################################
 # 4         Effect of climate
